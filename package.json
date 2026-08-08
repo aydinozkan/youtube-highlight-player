@@ -1,0 +1,15 @@
+{
+  "name": "youtube-highlight-player",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Manifest V3 Chrome extension that virtually trims YouTube videos to their most useful or most-replayed sections.",
+  "scripts": {
+    "test": "node --test tests/",
+    "build:icons": "node scripts/build-icons.js",
+    "build:package": "node scripts/build-package.js",
+    "package": "npm run build:icons && npm run build:package"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

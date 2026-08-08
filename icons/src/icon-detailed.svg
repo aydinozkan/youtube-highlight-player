@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!--
+    48px / 128px (Chrome Web Store listing) variant. Same solid
+    rounded-corner triangle as icon-simple.svg, plus a soft ambient glow
+    sitting behind it — a radial gradient, not an outline or a filter/blur.
+    Fourth direction on this motif; the difference from every one before
+    it is deliberate: this is the *overlay's own play-badge pattern*
+    (solid shape, glow as atmosphere behind it — see .yhp-play-badge's
+    box-shadow-based glow in panel.css) applied here, rather than a new
+    motif invented for the icon specifically. The glow is explicitly a
+    bonus: covering it entirely still leaves a fully legible solid
+    triangle, unlike every earlier attempt where the "highlight" detail
+    carried real meaning that would be lost without it.
+
+    Radial gradient, not a filter/blur, for the same reason as every
+    other soft edge in this project: a filter's blur needs real margin
+    inside its own filter region or the edge gets clipped into a hard
+    boundary (the bug fixed on the in-product timeline glow — see
+    buildActiveGlowPathD's comment in src/ui/rangeOverlay.js). This
+    gradient's outer stop is already fully transparent well inside the
+    canvas edge, so it tapers to nothing by construction.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7B5CF0"/>
+      <stop offset="1" stop-color="#D24FC8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="68" cy="65" r="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.42"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="chip">
+      <rect x="0" y="0" width="128" height="128" rx="22" ry="22"/>
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="128" height="128" rx="22" ry="22" fill="url(#bg)"/>
+
+  <!-- Clipped to the chip's own rounded silhouette so the glow's soft
+       edge tapers to nothing in open space, never against a hard corner
+       boundary (see header comment). -->
+  <g clip-path="url(#chip)">
+    <circle cx="68" cy="65" r="44" fill="url(#glow)"/>
+    <path d="M51,46 L51,84 L85,65 Z" fill="#FDFBFF" stroke="#FDFBFF" stroke-width="7.5" stroke-linejoin="round"/>
+  </g>
+</svg>

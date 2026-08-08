@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Highlight Player",
+  "version": "0.16.0",
+  "description": "Skips YouTube videos straight to the most-replayed or chapter-selected parts. No downloading or re-uploading.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "YouTube Highlight Player"
+  },
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["src/content/pageBridge.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": [
+        "src/telemetry/errorReporter.js",
+        "src/utils/deepFind.js",
+        "src/utils/rangeUtils.js",
+        "src/utils/extractYtInitialData.js",
+        "src/state/store.js",
+        "src/detection/heatmapStrategy.js",
+        "src/detection/chapterStrategy.js",
+        "src/detection/detectionManager.js",
+        "src/player/videoWatcher.js",
+        "src/player/playerController.js",
+        "src/ui/rangeOverlay.js",
+        "src/ui/skipIndicator.js",
+        "src/ui/nativeToggleButton.js",
+        "src/ui/panel.js",
+        "src/content/dataBridge.js",
+        "src/content/content.js"
+      ],
+      "css": ["src/ui/panel.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# Build output — regenerated via `npm run package` (build:icons + build:package),
+# not source. See scripts/build-package.js and README.md's "Packaging" section.
+dist/
+
+# Icons ARE checked in (icons/*.png) since they're referenced directly by
+# manifest.json — only the resvg-based build script's temp state, if any,
+# would go here. Nothing currently needed, kept as a placeholder comment.
+
+node_modules/
+
+# OS cruft
+.DS_Store

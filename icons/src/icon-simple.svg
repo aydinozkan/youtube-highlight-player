@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!--
+    Final direction: a solid rounded-corner triangle on the existing
+    gradient chip — no peak, no hollow/outline treatment, no glow at this
+    size. Replaces every hollow/thin-line exploration before it (a
+    stroked curve behind the triangle, then a layered-glow spike) with the
+    same pattern the redesigned overlay's own play badge already uses:
+    solid shape, glow (if any) as atmosphere behind it, never drawn as the
+    shape's own outline. This variant needs no separate fallback beyond
+    dropping the glow — the triangle itself is identical at every size
+    (see icon-detailed.svg), just without the glow layer, which is too
+    soft to register at 16px anyway. Used for both the 16px and 32px
+    manifest sizes (32px is the toolbar action icon's HiDPI/Retina
+    source, not a bigger logical size — it should look identical to the
+    16px icon, just rendered from sharper source instead of upscaled).
+
+    Rounded corners come from stroking the triangle with its own fill
+    color at round joins (a standard "rounded polygon" technique) rather
+    than hand-building arc-cornered path geometry — simpler, and the
+    result is identical either way.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7B5CF0"/>
+      <stop offset="1" stop-color="#D24FC8"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="128" height="128" rx="22" ry="22" fill="url(#bg)"/>
+
+  <path d="M51,46 L51,84 L85,65 Z" fill="#FDFBFF" stroke="#FDFBFF" stroke-width="7.5" stroke-linejoin="round"/>
+</svg>
