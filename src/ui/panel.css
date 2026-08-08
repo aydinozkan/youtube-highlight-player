@@ -75,7 +75,8 @@
 .yhp-panel--collapsed .yhp-section,
 .yhp-panel--collapsed .yhp-empty-state,
 .yhp-panel--collapsed .yhp-title,
-.yhp-panel--collapsed .yhp-toggle-label {
+.yhp-panel--collapsed .yhp-toggle-label,
+.yhp-panel--collapsed .yhp-settings-popover {
   display: none;
 }
 .yhp-panel--collapsed .yhp-header {
@@ -150,7 +151,8 @@
 }
 
 .yhp-nav-btn,
-.yhp-minimize-btn {
+.yhp-minimize-btn,
+.yhp-settings-btn {
   appearance: none;
   border: none;
   background: var(--yhp-surface);
@@ -165,7 +167,12 @@
   transition: background 150ms var(--yhp-ease-out), color 150ms var(--yhp-ease-out);
 }
 .yhp-nav-btn:hover,
-.yhp-minimize-btn:hover {
+.yhp-minimize-btn:hover,
+.yhp-settings-btn:hover {
+  background: var(--yhp-surface-hover);
+  color: var(--yhp-text);
+}
+.yhp-settings-btn[aria-expanded="true"] {
   background: var(--yhp-surface-hover);
   color: var(--yhp-text);
 }
@@ -175,6 +182,7 @@
 .yhp-play-badge:focus-visible,
 .yhp-nav-btn:focus-visible,
 .yhp-minimize-btn:focus-visible,
+.yhp-settings-btn:focus-visible,
 .yhp-panel:focus-visible {
   outline: 2px solid var(--yhp-accent-end);
   outline-offset: 2px;
@@ -249,6 +257,60 @@
 @media (prefers-reduced-motion: reduce) {
   .yhp-toggle-thumb { transition: transform 150ms ease; }
   .yhp-play-badge--playing { animation: none; }
+}
+
+/* ---- Settings popover --------------------------------------------------- */
+/* Same glass/blur/shadow language as the onboarding card below — both are
+ * small floating panels anchored below the header, just triggered
+ * differently (a click, not a first-run condition) and never both open at
+ * once in practice (the onboarding card only ever shows pre-interaction). */
+
+.yhp-settings-popover {
+  position: absolute;
+  top: 52px;
+  right: 16px;
+  z-index: 6;
+  width: 220px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--yhp-glass-bg);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--yhp-glass-border);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  animation: yhp-onboarding-card-in 180ms var(--yhp-ease-out);
+}
+
+.yhp-settings-popover-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--yhp-text-secondary);
+}
+
+.yhp-settings-popover-row {
+  align-items: flex-start;
+}
+.yhp-settings-popover-row .yhp-toggle-track {
+  margin-top: 1px;
+}
+.yhp-settings-popover-row .yhp-toggle-label {
+  white-space: normal;
+  font-weight: 500;
+  color: var(--yhp-text);
+}
+
+.yhp-settings-popover-desc {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--yhp-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yhp-settings-popover { animation: none; }
 }
 
 /* ---- First-run onboarding: spotlight + tip card ------------------------- */

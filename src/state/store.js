@@ -24,6 +24,12 @@
     highlightsEnabled: true,
     panelCollapsed: false, // whether the user last left the panel collapsed to its mini pill
     introSeen: false, // whether panel.js's one-time "here's what just happened" callout has been shown/dismissed
+    // On by default (disclosed in the store listing's privacy section,
+    // same as error reporting — see telemetry/analytics.js), but with a
+    // real, visible opt-out in the panel's settings popover, unlike
+    // error reporting — behavior tracking is the case users and
+    // reviewers actually expect a control for.
+    analyticsEnabled: true,
   };
 
   function hasChromeStorage() {

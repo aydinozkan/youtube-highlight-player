@@ -9,7 +9,7 @@
  * cheaper/safer than from a content script) rather than because anything
  * needs it today.
  */
-importScripts("../telemetry/errorReporter.js");
+importScripts("../telemetry/errorReporter.js", "../telemetry/analytics.js");
 self.YHP.ErrorReporter.installGlobalHandlers(self, "background");
 
 chrome.runtime.onInstalled.addListener(function (details) {
@@ -32,6 +32,18 @@ chrome.runtime.onInstalled.addListener(function (details) {
       // turn it off, so the behavior change is never a silent surprise.
       highlightsEnabled: true,
       introSeen: false,
+      analyticsEnabled: true,
     });
+  });
+  // A fresh install is the one reliable, single-fire point to both create
+  // the anonymous per-device analytics id and record that an install
+  // happened — an *upgrade* to this version (as opposed to a fresh
+  // install) never reaches this branch at all, so existing installs never
+  // get a retroactive "installed" event; analytics.js's own
+  // getOrCreateDistinctId() lazily creates the id for them instead, the
+  // first time any other event actually fires.
+  self.YHP.Analytics.init(true);
+  self.YHP.Analytics.getOrCreateDistinctId().then(function () {
+    self.YHP.Analytics.track("extension_installed");
   });
 });

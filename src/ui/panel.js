@@ -22,8 +22,8 @@
  *
  * Mode and highlight amount are intentionally not user-configurable: always
  * "most replayed", always the top 30% — see FIXED_MODE/FIXED_PERCENTAGE.
- * No settings (gear) affordance exists for the same reason — there's
- * nothing behind it to configure right now.
+ * The gear icon's popover exists for exactly one thing: the analytics
+ * opt-out (see telemetry/analytics.js) — not a general settings surface.
  *
  * Loading: `mount()` always starts in a pending state — the full, real,
  * interactive shell (nav arrows, play badge, title, toggle, collapse
@@ -151,6 +151,15 @@
   function iconSparkle() {
     return svg("svg", { viewBox: "0 0 24 24", class: "yhp-icon yhp-onboarding-sparkle" }, [
       svg("path", { d: "M12 3 L13.8 9.2 L20 11 L13.8 12.8 L12 19 L10.2 12.8 L4 11 L10.2 9.2 Z", fill: "currentColor" }),
+    ]);
+  }
+  /** A simple 6-tooth gear outline for the settings/privacy popover trigger. */
+  function iconGear() {
+    return svg("svg", { viewBox: "0 0 24 24", class: "yhp-icon" }, [
+      svg("path", {
+        d: "M12 15.5 A3.5 3.5 0 1 0 12 8.5 A3.5 3.5 0 1 0 12 15.5 Z M12 4.5 V6.3 M12 17.7 V19.5 M19.5 12 H17.7 M6.3 12 H4.5 M17.16 6.84 L15.9 8.1 M8.1 15.9 L6.84 17.16 M17.16 17.16 L15.9 15.9 M8.1 8.1 L6.84 6.84",
+        fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round",
+      }),
     ]);
   }
 
@@ -306,7 +315,75 @@
       h("span", { className: "yhp-toggle-label", text: "Play Selection Only" }),
     ]);
 
-    var headerRight = h("div", { className: "yhp-header-right" }, [toggleWrap, minimizeBtn]);
+    // ---- Settings popover: the one control this panel has, so a full
+    // options page/gear-menu structure would be overbuilt for it — a
+    // small popover anchored to the gear icon instead. Unlike error
+    // reporting (see errorReporter.js), usage analytics ships with a
+    // visible opt-out here rather than none at all — behavior tracking is
+    // the case users and reviewers actually expect a real control for.
+    var analyticsToggleInput = h("input", {
+      type: "checkbox",
+      className: "yhp-toggle-input",
+      "aria-label": "Share anonymous usage data",
+      onchange: function (e) {
+        settings.analyticsEnabled = e.target.checked;
+        emit("analyticsToggle", { enabled: e.target.checked });
+      },
+    });
+    analyticsToggleInput.checked = settings.analyticsEnabled !== false;
+
+    var settingsPopover = h("div", {
+      className: "yhp-settings-popover", role: "dialog", "aria-label": "Privacy settings",
+    }, [
+      h("p", { className: "yhp-settings-popover-title", text: "Privacy" }),
+      h("label", { className: "yhp-toggle yhp-settings-popover-row" }, [
+        analyticsToggleInput,
+        h("span", { className: "yhp-toggle-track" }, [h("span", { className: "yhp-toggle-thumb" })]),
+        h("span", { className: "yhp-toggle-label", text: "Share anonymous usage data" }),
+      ]),
+      h("p", {
+        className: "yhp-settings-popover-desc",
+        text: "Helps us see which features get used. Never what you watch — no video, title, or URL is ever included.",
+      }),
+    ]);
+    settingsPopover.style.display = "none";
+
+    var settingsOpen = false;
+    function handleSettingsOutsideClick(event) {
+      if (settingsPopover.contains(event.target) || settingsBtn.contains(event.target)) return;
+      setSettingsOpen(false);
+    }
+    function handleSettingsKeydown(event) {
+      if (event.key === "Escape") setSettingsOpen(false);
+    }
+    function setSettingsOpen(next) {
+      if (settingsOpen === next) return;
+      settingsOpen = next;
+      // Both this popover and the onboarding tip card (see "First-run
+      // onboarding" below) anchor to the same spot below the header —
+      // discovered by screenshotting the real panel, not assumed: a
+      // first-time viewer can click the gear icon before ever dismissing
+      // the tip, and the two would otherwise render on top of each other.
+      // Opening settings is itself deliberate engagement with the panel,
+      // so it counts as "got it" the same way the toggle already does.
+      if (next) acknowledgeOnboarding();
+      settingsPopover.style.display = next ? "" : "none";
+      settingsBtn.setAttribute("aria-expanded", next ? "true" : "false");
+      if (next) {
+        document.addEventListener("click", handleSettingsOutsideClick, true);
+        document.addEventListener("keydown", handleSettingsKeydown, true);
+      } else {
+        document.removeEventListener("click", handleSettingsOutsideClick, true);
+        document.removeEventListener("keydown", handleSettingsKeydown, true);
+      }
+    }
+    var settingsBtn = h("button", {
+      type: "button", className: "yhp-settings-btn", "aria-label": "Privacy settings",
+      "aria-expanded": "false", "aria-haspopup": "dialog",
+      onclick: function (e) { e.stopPropagation(); setSettingsOpen(!settingsOpen); },
+    }, [iconGear()]);
+
+    var headerRight = h("div", { className: "yhp-header-right" }, [toggleWrap, settingsBtn, minimizeBtn]);
 
     var header = h("div", { className: "yhp-header" }, [headerLeft, headerRight]);
 
@@ -439,7 +516,7 @@
       tabHighlightsBtn = h("button", {
         type: "button", className: "yhp-source-tab", role: "tab",
         text: "Highlights",
-        onclick: function () { switchToSource("heatmap"); },
+        onclick: function () { emit("sourceTabClicked", { to: "heatmap" }); switchToSource("heatmap"); },
       });
       highlightsNewBadge = h("span", { className: "yhp-source-tab-badge", "aria-hidden": "true" });
       highlightsNewBadge.style.display = "none";
@@ -449,7 +526,7 @@
       chaptersLabelSpan.textContent = "Chapters";
       tabChaptersBtn = h("button", {
         type: "button", className: "yhp-source-tab", role: "tab",
-        onclick: function () { switchToSource("chapters"); },
+        onclick: function () { emit("sourceTabClicked", { to: "chapters" }); switchToSource("chapters"); },
       }, [chaptersLabelSpan]);
 
       var tabs = h("div", { className: "yhp-source-tabs", role: "tablist" }, [tabHighlightsBtn, tabChaptersBtn]);
@@ -584,7 +661,7 @@
       className: "yhp-panel yhp-panel--entering",
       "data-yhp-panel": "1",
       tabindex: "-1",
-    }, [header, contentSlot, footer]);
+    }, [header, contentSlot, footer, settingsPopover]);
 
     // Entrance animation: add the class after one frame so the transition
     // actually runs, then drop the marker once it's done.
@@ -602,6 +679,7 @@
 
     function setCollapsed(next) {
       collapsed = next;
+      if (next) setSettingsOpen(false); // don't leave the popover floating over a collapsed pill
       panelRoot.classList.toggle("yhp-panel--collapsed", collapsed);
       minimizeBtn.innerHTML = "";
       minimizeBtn.appendChild(collapsed ? iconExpand() : iconMinimize());
@@ -644,6 +722,7 @@
       onboardingCard = null;
       settings.introSeen = true;
       emit("introSeen");
+      emit("onboardingDismissed");
     }
     function maybeShowOnboarding() {
       // Also requires highlightsEnabled to actually be true: introSeen is a
@@ -656,6 +735,7 @@
       if (!(hasHeatmap && activeSource === "heatmap" && settings.highlightsEnabled && !settings.introSeen && !collapsed)) return;
       if (onboardingCard) return;
       panelRoot.classList.add("yhp-panel--onboarding");
+      emit("onboardingShown");
       onboardingCard = h("div", { className: "yhp-onboarding-card", role: "status" }, [
         h("div", { className: "yhp-onboarding-card-header" }, [
           iconSparkle(),
@@ -847,6 +927,7 @@
     }
 
     function destroy() {
+      setSettingsOpen(false); // detaches the document-level click/keydown listeners, if attached
       if (panelRoot.parentNode) panelRoot.parentNode.removeChild(panelRoot);
     }
 

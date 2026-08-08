@@ -58,6 +58,7 @@
   var NativeToggleButton = YHP.NativeToggleButton;
   var Store = YHP.Store;
   var ErrorReporter = YHP.ErrorReporter;
+  var Analytics = YHP.Analytics;
 
   // Installed once, at module load — catches genuinely uncaught exceptions
   // and unhandled promise rejections anywhere in this content script's
@@ -170,6 +171,11 @@
 
     var settings = await Store.load();
     if (myToken !== initToken) return;
+    // Re-initialized on every navigation with the current setting, so a
+    // mid-session settings-popover toggle (see the "analyticsToggle" case
+    // below) and a real navigation both keep this in sync — there's no
+    // stale "enabled at the time this tab first loaded" state to worry about.
+    Analytics.init(settings.analyticsEnabled);
 
     // ---- Mount the shell immediately — the header (nav arrows, play
     // badge, title, toggle, collapse icon) and footer are fully real and
@@ -248,6 +254,11 @@
       if (enabled) controller.activate(); else controller.deactivate();
       panelApi.setEnabled(enabled);
       if (nativeButton) nativeButton.setEnabled(enabled);
+      // The only two callers of this function are the panel's own toggle
+      // and the native control-bar button — both real user actions, never
+      // a programmatic set — so this is always a genuine "the viewer just
+      // did something" event, not initial-mount noise.
+      Analytics.track("highlights_toggled", { enabled: enabled });
     }
 
     var panelApi = Panel.mount({
@@ -271,7 +282,11 @@
         if (event.type === "next") { controller.jumpToNext(); return; }
         if (event.type === "collapsedChange") { Store.save({ panelCollapsed: event.collapsed }); return; }
         if (event.type === "introSeen") { Store.save({ introSeen: true }); return; }
+        if (event.type === "onboardingShown") { Analytics.track("onboarding_shown"); return; }
+        if (event.type === "onboardingDismissed") { Analytics.track("onboarding_dismissed"); return; }
+        if (event.type === "sourceTabClicked") { Analytics.track("source_tab_clicked", { to: event.to }); return; }
         if (event.type === "retryDetection") {
+          Analytics.track("check_again_clicked");
           // "No data yet" (the empty-state panel) most often means
           // YouTube's own "most replayed" data hasn't populated for a
           // new upload yet — re-run the whole per-video pipeline from
@@ -279,6 +294,15 @@
           // a corrected duration already uses, so a second attempt gets
           // a fully consistent state if data has since shown up.
           init(videoId);
+          return;
+        }
+        if (event.type === "analyticsToggle") {
+          // Takes effect immediately in this tab (not just on next
+          // navigation) — Analytics.init() is otherwise only called at
+          // the top of init(), which a mid-session toggle click doesn't
+          // go through.
+          Store.save({ analyticsEnabled: event.enabled });
+          Analytics.init(event.enabled);
           return;
         }
         // Unhandled types (chapterSelection, tabChange) all mean the same
@@ -389,6 +413,13 @@
       if (settings.highlightsEnabled && (signals.heatmapSamples.length > 0 || signals.chapters.length > 0)) {
         controller.activate();
       }
+      // One event per video, once detection has actually finished (not per
+      // poll tick) — tells us how often each strategy earns its keep in
+      // the wild, without ever naming which video it was.
+      Analytics.track("detection_result", {
+        has_heatmap: signals.heatmapSamples.length > 0,
+        has_chapters: signals.chapters.length > 0,
+      });
     }
 
     // Fetches this exact video's own watch page over the network and

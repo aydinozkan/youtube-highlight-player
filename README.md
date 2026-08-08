@@ -376,14 +376,15 @@ get-with-defaults semantics mean an existing install's already-stored
 The interval-math core, the object-graph search, both detection strategies'
 parsing logic, the `ytInitialData` HTML-extraction helper (see the fifth
 "Known limitations" finding below), the error reporter's DSN-parsing/
-scrubbing/id-generation helpers, and the player controller's skip/
-anti-loop behavior are covered with `node:test` (no browser needed):
+scrubbing/id-generation helpers, the analytics module's id-generation and
+init-gating logic, and the player controller's skip/anti-loop behavior are
+covered with `node:test` (no browser needed):
 
 ```bash
 npm test
 ```
 
-124 tests, all passing as of this build.
+128 tests, all passing as of this build.
 
 ## Icons
 
@@ -533,6 +534,58 @@ existing `throw`/error-message call sites, and covered going forward by
 type + message + first stack frame) so one repeating bug can't blow
 through Sentry's free-tier quota.
 
+## Analytics
+
+`src/telemetry/analytics.js` sends a short, curated list of feature-usage
+events to PostHog — same hand-rolled-against-the-plain-HTTP-API approach
+as error reporting (no SDK, no build step), same verification discipline
+(the `/capture/` endpoint, CORS preflight behavior, and the event JSON
+shape were all confirmed with real curl requests against a real PostHog
+project — including that `$process_person_profile: false` still counts
+an event toward trends/uniques without building a full identity-resolution
+"Person" profile — before this was wired in).
+
+Unlike error reporting, this one ships with a **visible opt-out**: the
+gear icon in the panel header (`panel.js`'s settings popover) toggles
+`analyticsEnabled` (see `store.js`'s `DEFAULTS`), on by default but a real
+control, not a technicality — tracking *what people do* is exactly the
+case users and reviewers expect one for, unlike incidental crash data.
+Flipping it takes effect immediately in the current tab (`content.js`'s
+`analyticsToggle` case calls `Analytics.init()` again on the spot, not
+just on the next navigation).
+
+The event list, deliberately short:
+
+| Event | Fired when | Properties |
+|---|---|---|
+| `extension_installed` | `background.js`'s `onInstalled` (fresh installs only) | — |
+| `detection_result` | `content.js`'s `reveal()`, once per video | `has_heatmap`, `has_chapters` |
+| `highlights_toggled` | The panel toggle or native control-bar button — real user actions only, never a programmatic set | `enabled` |
+| `check_again_clicked` | The empty-state "Check again" button | — |
+| `onboarding_shown` / `onboarding_dismissed` | The first-run tip card (see "Default state" below) | — |
+| `source_tab_clicked` | Highlights/Chapters tab click (videos with both — see "Highlights + chapters together") | `to` |
+
+Same privacy discipline as error reporting: never a video ID, title, URL,
+or anything else about what someone is watching — every property above is
+the entire list, nothing else rides along. The anonymous `distinct_id`
+lives in `chrome.storage.local` (not `chrome.storage.sync`, deliberately —
+an anonymous per-install id has no reason to follow the user's Google
+account across devices the way real settings do), generated once by
+`background.js` at install and lazily by `analytics.js` itself for
+installs that predate this feature (an *upgrade*, unlike a fresh install,
+never fires `onInstalled` with `reason: "install"`, so there's no single
+reliable moment to seed it for those).
+
+One real bug this caught during development, worth recording: the
+settings popover and the onboarding tip card (see "Default state on a
+fresh install" above) both anchor to the exact same spot below the
+header — a real screenshot of the actual panel showed them rendering on
+top of each other, since a first-time viewer can click the new gear icon
+before ever dismissing the tip. Fixed by having `setSettingsOpen(true)`
+call `acknowledgeOnboarding()` — opening settings is itself deliberate
+engagement with the panel, so it counts as "got it" the same way the
+toggle already does.
+
 ## Known limitations / what to verify manually
 
 - **Heatmap detection has been verified against a live page.** The DOM
@@ -654,6 +707,16 @@ through Sentry's free-tier quota.
   will show empty ranges briefly, but this now self-corrects — see
   `content.js`'s `durationchange` handling above, which reinitializes once
   the real duration is known.
+- **Header layout at very narrow panel widths.** Screenshotted the real
+  header (not eyeballed) after adding the settings gear icon: everything
+  — title, toggle, gear, minimize button — fits comfortably down to
+  ~520px, degrades gracefully (elements pushed past the edge, nothing
+  overlapping or unreadable) below that, and the header/settings-popover
+  combination hasn't been tested below 400px, which is narrower than any
+  realistic mount width in practice (the panel mounts alongside YouTube's
+  primary player column, not a narrow sidebar). Not fixed proactively,
+  consistent with how the onboarding card's own narrow-width behavior was
+  already treated — revisit if it's ever actually reported.
 - **The native control-bar button (`nativeToggleButton.js`) was verified
   against a live page and had one real bug, now fixed.** The current
   "Delhi" player redesign nests the actual buttons a level deeper than
