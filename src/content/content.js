@@ -403,6 +403,17 @@
     duration = results[1] || (pageData && pageData.duration) || 0;
     debugLog("duration resolved:", duration, "pageData:", pageData);
 
+    // Independent of detection/reveal() below — the panel's header
+    // mounted immediately at init() with the extension's own name as a
+    // placeholder (see panel.js's setVideoTitle comment); this swaps in
+    // the real video title as soon as it's known, which is normally much
+    // sooner than detection finishes. Reusing the exact same pageData
+    // object duration/videoId already trusted above, not a new fetch —
+    // no separate freshness question to answer for it.
+    var videoTitle = pageData && pageData.playerResponse
+      && pageData.playerResponse.videoDetails && pageData.playerResponse.videoDetails.title;
+    if (videoTitle) panelApi.setVideoTitle(videoTitle);
+
     var revealed = false;
     function reveal(signals) {
       if (revealed) return;

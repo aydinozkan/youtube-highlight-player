@@ -129,8 +129,22 @@
   align-items: center;
   gap: 6px;
 }
+.yhp-header-left {
+  /* Flex items don't shrink below their content's natural width unless
+     told to — without this, a long video title just pushes the header
+     wider (or overflows) instead of truncating. */
+  min-width: 0;
+  flex: 1 1 auto;
+}
 
 .yhp-title {
+  /* The shrinking, truncating element within .yhp-header-left — the nav
+     arrows/play badge around it all keep flex:none (fixed size), so this
+     is the one that gives way to a long video title. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 500;
   font-size: 12px;
   color: var(--yhp-text-secondary);

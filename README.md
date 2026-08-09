@@ -317,6 +317,30 @@ The chapters view (used automatically when a video has no heatmap, or
 alongside one via the tab switcher — see "Highlights + chapters together"
 above) lets you check/uncheck individual chapters instead.
 
+## Video title in the header
+
+Mounting the panel as the first child of `#below`/`#bottom-row`/etc. (see
+"The widget shell renders before any of this — always" above) pushes
+YouTube's own title further down the page than usual — reported live as
+"the video title isn't visible anymore." Fixed by showing it in the
+panel's own header instead of reinventing new UI for it: `panel.js`'s
+title span starts as the extension's own name (`PANEL_NAME`, the only
+thing known at mount time) and `content.js` calls `panelApi.setVideoTitle
+(pageData.playerResponse.videoDetails.title)` as soon as pageData
+resolves — independent of and generally well before detection/`reveal()`
+finishes, since it's the exact same already-freshness-validated object
+duration and video ID already come from, not a new fetch with its own
+staleness question to answer.
+
+Truncated with an ellipsis (`.yhp-header-left`/`.yhp-title` both need
+`min-width: 0` for a flex child to actually shrink instead of overflowing
+— easy to miss), verified against both a short and a deliberately
+absurd long title at two widths before shipping. The `title` attribute
+(hover tooltip) carries the untruncated text plus the extension's own
+name, so dropping the permanent "YouTube Highlight Player" label doesn't
+make it undiscoverable, just not using space by default — the play badge
+and settings-gear icon still carry visible brand identity either way.
+
 ## Default state on a fresh install
 
 `highlightsEnabled` (`src/state/store.js`'s `DEFAULTS`, seeded on install by

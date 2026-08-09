@@ -66,6 +66,7 @@
   var FIXED_MODE = "most-replayed";
   var FIXED_PERCENTAGE = 0.3;
   var MAX_PROGRESS_DOTS = 12; // beyond this many highlights, dots get too cramped — fall back to text only
+  var PANEL_NAME = "YouTube Highlight Player";
 
   // A list, not a single hardcoded link, so adding another platform later
   // is a one-line addition here, not a UI change — see buildSupportLinks
@@ -317,11 +318,21 @@
     }
     updateToggleAvailability();
 
+    // Starts as the extension's own name — the only thing known at mount
+    // time, before pageData (and the real video title with it) resolves
+    // — then setVideoTitle() below swaps it for the real title, usually
+    // within a few hundred ms. Truncated by CSS (.yhp-title), so the
+    // `title` attribute doubles as a hover tooltip for the untruncated
+    // text; setVideoTitle keeps the extension's own name in there too
+    // (prefixed) so it stays discoverable even once the visible text is
+    // just the video's.
+    els.titleEl = h("span", { className: "yhp-title", text: PANEL_NAME, title: PANEL_NAME });
+
     var headerLeft = h("div", { className: "yhp-header-left" }, [
       navPrev,
       els.playBadge,
       navNext,
-      h("span", { className: "yhp-title", text: "YouTube Highlight Player" }),
+      els.titleEl,
     ]);
 
     var minimizeBtn = h("button", {
@@ -969,6 +980,23 @@
       noteChaptersInteraction();
     }
 
+    /**
+     * Swaps the header's title text for the real video title, once
+     * content.js has it (pageData resolving — see content.js's init(),
+     * independent of and generally well before detection/reveal()
+     * finishes). Called at most once in practice; harmless if called
+     * again (e.g. a retry) since it's just a plain text swap. Falls back
+     * to leaving PANEL_NAME in place if `title` is empty/not a string —
+     * this mounting into `#below`/etc. no longer being the only visible
+     * place to see the video's title (see README) is worth fixing, but
+     * not at the cost of ever showing a blank header.
+     */
+    function setVideoTitle(title) {
+      if (typeof title !== "string" || !title.trim()) return;
+      els.titleEl.textContent = title; // creator-controlled text: textContent only, see file header
+      els.titleEl.title = PANEL_NAME + " — " + title; // tooltip: full text (CSS truncates the visible line) + keeps the extension's own name discoverable
+    }
+
     function destroy() {
       setSettingsOpen(false); // detaches the document-level click/keydown listeners, if attached
       if (panelRoot.parentNode) panelRoot.parentNode.removeChild(panelRoot);
@@ -993,6 +1021,7 @@
       getActiveSource: getActiveSource,
       getSelectedChapters: getSelectedChapters,
       setEnabled: setEnabled,
+      setVideoTitle: setVideoTitle,
       revealSignals: revealSignals,
       upgradeToHeatmap: upgradeToHeatmap,
       destroy: destroy,
