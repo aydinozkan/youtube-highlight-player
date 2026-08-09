@@ -89,10 +89,18 @@
 .yhp-panel--collapsed .yhp-section,
 .yhp-panel--collapsed .yhp-empty-state,
 .yhp-panel--collapsed .yhp-title,
-.yhp-panel--collapsed .yhp-toggle-label,
-.yhp-panel--collapsed .yhp-settings-popover {
+.yhp-panel--collapsed .yhp-toggle-label {
   display: none;
 }
+/* Deliberately NOT hiding .yhp-settings-popover here — real bug, reported
+ * live: the gear icon stays visible and clickable in the collapsed pill
+ * (see headerRight below), so force-hiding the popover via CSS made it a
+ * dead-end control that looked clickable but silently did nothing while
+ * collapsed. The scenario this rule was trying to prevent (a popover
+ * left open when the panel collapses) is already handled in JS —
+ * setCollapsed() calls setSettingsOpen(false) whenever collapsing — so
+ * this CSS rule was both redundant for that case and actively wrong for
+ * the "open it while already collapsed" case. */
 .yhp-panel--collapsed .yhp-header {
   margin-bottom: 0;
 }
