@@ -67,12 +67,13 @@
   var FIXED_PERCENTAGE = 0.3;
   var MAX_PROGRESS_DOTS = 12; // beyond this many highlights, dots get too cramped — fall back to text only
 
-  // A list, not a single hardcoded link, specifically so adding another
-  // platform later (e.g. once a slower-to-approve one comes through) is a
-  // one-line addition here, not a UI change — see buildSupportLinks below.
+  // A list, not a single hardcoded link, so adding another platform later
+  // is a one-line addition here, not a UI change — see buildSupportLinks
+  // below. Currently just one: the label deliberately says what the link
+  // *does* ("send a tip"), not which payment platform happens to be
+  // behind it — the platform name isn't the point here.
   var SUPPORT_LINKS = [
-    { id: "kofi", label: "Ko-fi", url: "https://ko-fi.com/aydinozkan" },
-    { id: "github", label: "GitHub Sponsors", url: "https://github.com/sponsors/aydinozkan" },
+    { id: "kofi", label: "Send a tip", url: "https://ko-fi.com/aydinozkan" },
   ];
 
   var SVG_NS = "http://www.w3.org/2000/svg";
