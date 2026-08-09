@@ -153,14 +153,26 @@
       svg("path", { d: "M12 3 L13.8 9.2 L20 11 L13.8 12.8 L12 19 L10.2 12.8 L4 11 L10.2 9.2 Z", fill: "currentColor" }),
     ]);
   }
-  /** A simple 6-tooth gear outline for the settings/privacy popover trigger. */
+  /**
+   * A 6-tooth gear for the settings/privacy popover trigger: a ring plus
+   * six small rotated rectangles as teeth, not rays — an earlier version
+   * used thin radiating lines around a circle, which read as a sun/
+   * brightness icon instead (caught from a real screenshot, not a
+   * mockup — see README's Analytics section for the general pattern of
+   * catching this stuff from real renders).
+   */
   function iconGear() {
-    return svg("svg", { viewBox: "0 0 24 24", class: "yhp-icon" }, [
-      svg("path", {
-        d: "M12 15.5 A3.5 3.5 0 1 0 12 8.5 A3.5 3.5 0 1 0 12 15.5 Z M12 4.5 V6.3 M12 17.7 V19.5 M19.5 12 H17.7 M6.3 12 H4.5 M17.16 6.84 L15.9 8.1 M8.1 15.9 L6.84 17.16 M17.16 17.16 L15.9 15.9 M8.1 8.1 L6.84 6.84",
-        fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round",
-      }),
-    ]);
+    var teeth = [0, 60, 120, 180, 240, 300].map(function (deg) {
+      return svg("rect", {
+        x: "10.8", y: "3.6", width: "2.4", height: "2.8", rx: "0.6",
+        fill: "currentColor",
+        transform: "rotate(" + deg + " 12 12)",
+      });
+    });
+    return svg("svg", { viewBox: "0 0 24 24", class: "yhp-icon" }, teeth.concat([
+      svg("circle", { cx: "12", cy: "12", r: "5", fill: "none", stroke: "currentColor", "stroke-width": "1.8" }),
+      svg("circle", { cx: "12", cy: "12", r: "1.5", fill: "currentColor" }),
+    ]));
   }
 
   /** A small circular progress ring; call .set(fraction) to update the arc. */
