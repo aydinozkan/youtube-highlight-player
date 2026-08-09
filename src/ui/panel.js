@@ -67,6 +67,14 @@
   var FIXED_PERCENTAGE = 0.3;
   var MAX_PROGRESS_DOTS = 12; // beyond this many highlights, dots get too cramped — fall back to text only
 
+  // A list, not a single hardcoded link, specifically so adding another
+  // platform later (e.g. once a slower-to-approve one comes through) is a
+  // one-line addition here, not a UI change — see buildSupportLinks below.
+  var SUPPORT_LINKS = [
+    { id: "kofi", label: "Ko-fi", url: "https://ko-fi.com/aydinozkan" },
+    { id: "github", label: "GitHub Sponsors", url: "https://github.com/sponsors/aydinozkan" },
+  ];
+
   var SVG_NS = "http://www.w3.org/2000/svg";
 
   function h(tag, attrs, children) {
@@ -173,6 +181,15 @@
       svg("circle", { cx: "12", cy: "12", r: "5", fill: "none", stroke: "currentColor", "stroke-width": "1.8" }),
       svg("circle", { cx: "12", cy: "12", r: "1.5", fill: "currentColor" }),
     ]));
+  }
+  /** A small arrow-out-of-box glyph marking a support link as opening a new tab — generic on purpose, not a per-platform brand mark (see SUPPORT_LINKS' comment). */
+  function iconExternalLink() {
+    return svg("svg", { viewBox: "0 0 24 24", class: "yhp-icon yhp-settings-support-icon" }, [
+      svg("path", {
+        d: "M9 6 H6.5 A1.5 1.5 0 0 0 5 7.5 V17.5 A1.5 1.5 0 0 0 6.5 19 H16.5 A1.5 1.5 0 0 0 18 17.5 V15 M13 5 H19 V11 M18.5 5.5 L10.5 13.5",
+        fill: "none", stroke: "currentColor", "stroke-width": "1.7", "stroke-linecap": "round", "stroke-linejoin": "round",
+      }),
+    ]);
   }
 
   /** A small circular progress ring; call .set(fraction) to update the arc. */
@@ -344,6 +361,23 @@
     });
     analyticsToggleInput.checked = settings.analyticsEnabled !== false;
 
+    // Real `<a>` elements — so browser-native behavior (new tab,
+    // middle-click, etc.) all just works — with a click handler layered
+    // on purely for the analytics side-effect; nothing here calls
+    // preventDefault, so the link navigates normally either way. Defined
+    // inside mount() (not alongside the module-level icon builders above)
+    // specifically because it needs `emit`, which only exists per-instance.
+    var supportLinkEls = SUPPORT_LINKS.map(function (link) {
+      return h("a", {
+        className: "yhp-settings-support-link",
+        href: link.url, target: "_blank", rel: "noopener noreferrer",
+        onclick: function () { emit("supportLinkClicked", { platform: link.id }); },
+      }, [
+        h("span", { text: link.label }),
+        iconExternalLink(),
+      ]);
+    });
+
     var settingsPopover = h("div", {
       className: "yhp-settings-popover", role: "dialog", "aria-label": "Privacy settings",
     }, [
@@ -357,6 +391,13 @@
         className: "yhp-settings-popover-desc",
         text: "Helps us see which features get used. Never what you watch — no video, title, or URL is ever included.",
       }),
+      h("div", { className: "yhp-settings-popover-divider" }),
+      h("p", { className: "yhp-settings-popover-title", text: "Support" }),
+      h("p", {
+        className: "yhp-settings-popover-desc",
+        text: "Enjoying this? A tip helps keep it going — entirely optional.",
+      }),
+      h("div", { className: "yhp-settings-support-links" }, supportLinkEls),
     ]);
     settingsPopover.style.display = "none";
 

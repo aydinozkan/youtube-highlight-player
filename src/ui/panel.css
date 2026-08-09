@@ -309,6 +309,48 @@
   color: var(--yhp-text-secondary);
 }
 
+.yhp-settings-popover-divider {
+  height: 1px;
+  background: var(--yhp-glass-border);
+  margin: 14px 0;
+}
+
+.yhp-settings-support-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.yhp-settings-support-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  margin: 0 -8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--yhp-text);
+  text-decoration: none;
+  transition: background 150ms var(--yhp-ease-out);
+}
+.yhp-settings-support-link:hover {
+  background: var(--yhp-surface-hover);
+}
+.yhp-settings-support-link:focus-visible {
+  outline: 2px solid var(--yhp-accent-end);
+  outline-offset: 1px;
+}
+
+.yhp-settings-support-icon {
+  width: 13px;
+  height: 13px;
+  color: var(--yhp-text-secondary);
+  flex: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .yhp-settings-popover { animation: none; }
 }

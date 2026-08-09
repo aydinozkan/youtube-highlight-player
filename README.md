@@ -564,6 +564,7 @@ The event list, deliberately short:
 | `check_again_clicked` | The empty-state "Check again" button | — |
 | `onboarding_shown` / `onboarding_dismissed` | The first-run tip card (see "Default state" below) | — |
 | `source_tab_clicked` | Highlights/Chapters tab click (videos with both — see "Highlights + chapters together") | `to` |
+| `support_link_clicked` | A Ko-fi/GitHub Sponsors link in the settings popover's "Support" section (see "Support links" below) | `platform` |
 
 Same privacy discipline as error reporting: never a video ID, title, URL,
 or anything else about what someone is watching — every property above is
@@ -585,6 +586,26 @@ before ever dismissing the tip. Fixed by having `setSettingsOpen(true)`
 call `acknowledgeOnboarding()` — opening settings is itself deliberate
 engagement with the panel, so it counts as "got it" the same way the
 toggle already does.
+
+Also worth noting: an earlier version of `iconGear()` used a circle plus
+eight thin radiating lines, which rendered as a sun/brightness icon
+rather than a gear — caught from a real screenshot (a user's, not a
+mockup), not by re-reading the SVG path and assuming it was right.
+Rebuilt as an actual ring + six rotated-rect teeth + a center hub.
+
+### Support links
+
+The same settings popover has a "Support" section — `SUPPORT_LINKS` in
+`panel.js`, currently Ko-fi and GitHub Sponsors — entirely optional, no
+feature is gated behind it. Deliberately a list, not a single hardcoded
+URL: GitHub Sponsors requires enrollment/approval that can lag behind
+setting up something like Ko-fi, so the UI was built to hold multiple
+platforms from day one rather than needing a redesign to add a second
+one later. Each link is a real `<a>` (native new-tab/middle-click
+behavior, no JS navigation) with a `supportLinkClicked` → `Analytics.track
+("support_link_clicked", {platform})` side-effect layered on top, so
+there's real signal on whether anyone actually clicks through — without
+that being a condition of the link working at all.
 
 ## Known limitations / what to verify manually
 

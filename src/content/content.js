@@ -285,6 +285,7 @@
         if (event.type === "onboardingShown") { Analytics.track("onboarding_shown"); return; }
         if (event.type === "onboardingDismissed") { Analytics.track("onboarding_dismissed"); return; }
         if (event.type === "sourceTabClicked") { Analytics.track("source_tab_clicked", { to: event.to }); return; }
+        if (event.type === "supportLinkClicked") { Analytics.track("support_link_clicked", { platform: event.platform }); return; }
         if (event.type === "retryDetection") {
           Analytics.track("check_again_clicked");
           // "No data yet" (the empty-state panel) most often means
