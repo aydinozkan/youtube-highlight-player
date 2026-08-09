@@ -2,6 +2,7 @@
   "name": "youtube-highlight-player",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Manifest V3 Chrome extension that virtually trims YouTube videos to their most useful or most-replayed sections.",
   "scripts": {
     "test": "node --test tests/",

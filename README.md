@@ -5,6 +5,9 @@ sections of a YouTube video. It's a **virtual trim**: nothing is downloaded,
 edited, or re-uploaded. The extension controls YouTube's existing `<video>`
 element and skips over unwanted time ranges during normal playback.
 
+[MIT licensed](LICENSE). Contributions welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
+
 ## Install (unpacked, for development/testing)
 
 1. Open `chrome://extensions`.
