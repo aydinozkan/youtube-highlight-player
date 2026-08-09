@@ -52,7 +52,13 @@ simple tab switcher to flip between the two.
 
 This extension has no backend server of its own. It doesn't sell data,
 and it never sends anything about what you watch — no video ID, title, or
-history — to anyone. Full privacy policy: [link]
+history — to anyone. Full privacy policy: [privacy-link]
+
+**Open source**
+
+The full source code is public — don't just take the privacy claims
+above on faith, go read exactly what the extension does:
+https://github.com/aydinozkan/youtube-highlight-player
 
 ---
 
@@ -63,9 +69,12 @@ affiliated with, endorsed by, or sponsored by YouTube or Google LLC.*
 Productivity (or: Tools)
 
 ## Notes
-- Replace `[link]` with the live privacy policy artifact URL before
-  publishing.
+- Replace `[privacy-link]` with the live privacy policy artifact URL
+  before publishing.
 - The three existing screenshots (store-assets/screenshots/) predate the
   settings gear icon added in v0.17.0 — worth a recapture before final
   submission so the listing matches what installers actually see, though
   not launch-blocking (the panel's core layout is otherwise unchanged).
+- The Developer Dashboard also has a dedicated "Official URL" field
+  (separate from the description body) — worth pointing that at the
+  GitHub repo too, not just linking it inline in the description text.
