@@ -29,6 +29,20 @@
 
   box-sizing: border-box;
   position: relative;
+  /* Real bug, caught from a real screenshot: the settings popover (see
+     .yhp-settings-popover below) is `position: absolute` and, now that it
+     has both a Privacy and a Support section, tall enough to extend past
+     this panel's own box into whatever YouTube renders as a *later DOM
+     sibling* in the same mount container (its own Save/Download/•••
+     action row, in the report that caught this). This panel had
+     `position: relative` but no z-index at all, so that overlap was
+     decided by DOM order, not by the popover's own (only locally
+     meaningful) z-index — YouTube's later sibling content simply painted
+     on top. Matches the exact reasoning `.yhp-skip-indicator` already
+     uses elsewhere in this file: YouTube's own chrome stacks at
+     z-indexes we don't control, so go far above anything it could
+     plausibly use, rather than guessing at a "high enough" number. */
+  z-index: 2147483000;
   margin: 12px 0;
   padding: 14px 16px 12px;
   border: 1px solid var(--yhp-glass-border);
