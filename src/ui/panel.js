@@ -70,10 +70,10 @@
   // A list, not a single hardcoded link, so adding another platform later
   // is a one-line addition here, not a UI change — see buildSupportLinks
   // below. Currently just one: the label deliberately says what the link
-  // *does* ("send a tip"), not which payment platform happens to be
-  // behind it — the platform name isn't the point here.
+  // *does*, not which payment platform happens to be behind it — the
+  // platform name isn't the point here.
   var SUPPORT_LINKS = [
-    { id: "kofi", label: "Send a tip", url: "https://ko-fi.com/aydinozkan" },
+    { id: "kofi", label: "Support this project", url: "https://ko-fi.com/aydinozkan" },
   ];
 
   var SVG_NS = "http://www.w3.org/2000/svg";
@@ -183,16 +183,6 @@
       svg("circle", { cx: "12", cy: "12", r: "1.5", fill: "currentColor" }),
     ]));
   }
-  /** A small arrow-out-of-box glyph marking a support link as opening a new tab — generic on purpose, not a per-platform brand mark (see SUPPORT_LINKS' comment). */
-  function iconExternalLink() {
-    return svg("svg", { viewBox: "0 0 24 24", class: "yhp-icon yhp-settings-support-icon" }, [
-      svg("path", {
-        d: "M9 6 H6.5 A1.5 1.5 0 0 0 5 7.5 V17.5 A1.5 1.5 0 0 0 6.5 19 H16.5 A1.5 1.5 0 0 0 18 17.5 V15 M13 5 H19 V11 M18.5 5.5 L10.5 13.5",
-        fill: "none", stroke: "currentColor", "stroke-width": "1.7", "stroke-linecap": "round", "stroke-linejoin": "round",
-      }),
-    ]);
-  }
-
   /** A small circular progress ring; call .set(fraction) to update the arc. */
   function buildProgressRing(radius) {
     var r = radius || 9;
@@ -370,12 +360,11 @@
     // specifically because it needs `emit`, which only exists per-instance.
     var supportLinkEls = SUPPORT_LINKS.map(function (link) {
       return h("a", {
-        className: "yhp-settings-support-link",
+        className: "yhp-settings-support-btn",
         href: link.url, target: "_blank", rel: "noopener noreferrer",
         onclick: function () { emit("supportLinkClicked", { platform: link.id }); },
       }, [
         h("span", { text: link.label }),
-        iconExternalLink(),
       ]);
     });
 

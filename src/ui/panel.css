@@ -348,37 +348,36 @@
 .yhp-settings-support-links {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   margin-top: 10px;
 }
 
-.yhp-settings-support-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 8px;
-  margin: 0 -8px;
-  border-radius: 8px;
+/* A real button, not a link row — same pill-shaped gradient CTA language
+ * as .yhp-onboarding-card-cta (the "Got it" button), reused here rather
+ * than invented fresh, since both are "the one small CTA inside a
+ * popover" case. Still a real <a> under the hood (native new-tab/
+ * middle-click behavior), just styled as a button. */
+.yhp-settings-support-btn {
+  appearance: none;
+  border: none;
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 999px;
+  background: var(--yhp-accent-gradient);
+  color: #ffffff;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--yhp-text);
+  font-weight: 600;
+  text-align: center;
   text-decoration: none;
-  transition: background 150ms var(--yhp-ease-out);
+  cursor: pointer;
+  transition: filter 150ms var(--yhp-ease-out), transform 150ms var(--yhp-ease-out);
 }
-.yhp-settings-support-link:hover {
-  background: var(--yhp-surface-hover);
-}
-.yhp-settings-support-link:focus-visible {
+.yhp-settings-support-btn:hover { filter: brightness(1.08); }
+.yhp-settings-support-btn:active { transform: scale(0.97); }
+.yhp-settings-support-btn:focus-visible {
   outline: 2px solid var(--yhp-accent-end);
-  outline-offset: 1px;
-}
-
-.yhp-settings-support-icon {
-  width: 13px;
-  height: 13px;
-  color: var(--yhp-text-secondary);
-  flex: none;
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
