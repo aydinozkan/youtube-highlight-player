@@ -18,6 +18,14 @@
   --yhp-text-secondary: rgba(245, 244, 248, 0.7);
   --yhp-text-muted: rgba(245, 244, 248, 0.5);
   --yhp-glass-bg: rgba(18, 16, 24, 0.75);
+  /* Used by floating overlays (settings popover, onboarding card) rather
+     than --yhp-glass-bg above — those float over unpredictable page
+     chrome (YouTube's own buttons/text), not just the video, and 75%
+     opacity let that bleed through legibly enough to look tangled/messy
+     (caught from a live screenshot). The main panel keeps --yhp-glass-bg
+     as-is: it sits over the video itself, where that translucency reads
+     as an intentional glass HUD, not a bug. */
+  --yhp-overlay-bg: rgba(14, 12, 20, 0.95);
   --yhp-glass-border: rgba(180, 150, 255, 0.16);
   --yhp-surface: rgba(255, 255, 255, 0.06);
   --yhp-surface-hover: rgba(255, 255, 255, 0.1);
@@ -295,7 +303,7 @@
   width: 220px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--yhp-glass-bg);
+  background: var(--yhp-overlay-bg);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid var(--yhp-glass-border);
@@ -412,7 +420,7 @@
   width: 200px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--yhp-glass-bg);
+  background: var(--yhp-overlay-bg);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid var(--yhp-glass-border);
