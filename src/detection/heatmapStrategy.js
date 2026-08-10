@@ -33,7 +33,7 @@
  * tests/detection.test.js. Only extractHeatmapFromDom touches `document`.
  */
 (function (root, factory) {
-  var api = factory();
+  var api = factory(root);
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
@@ -41,7 +41,7 @@
     root.YHP = root.YHP || {};
     root.YHP.HeatmapStrategy = api;
   }
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (root) {
   "use strict";
 
   function clamp01(n) {
@@ -184,8 +184,43 @@
   }
 
   /**
-   * @param {{duration: number, doc?: Document}} options - `doc` is
-   *   injectable for testing; defaults to the real `document` in a browser.
+   * Reports a genuinely unexpected exception from extractHeatmapFromDom —
+   * deliberately NOT the ordinary "no `.ytp-heat-map-container` for this
+   * video" case (that's an early `return []` inside extractHeatmapFromDom
+   * itself, no exception ever thrown, nothing to report — and correctly
+   * so, since the overwhelming majority of ordinary videos simply don't
+   * have "most replayed" data; reporting that would be pure noise, not
+   * signal). This is specifically for the rarer case where YouTube's
+   * markup changed enough to break an assumption *inside* the parsing
+   * code and it actually threw — a real, narrow "something we didn't
+   * anticipate just happened" signal, and one errorReporter's global
+   * `error`/`unhandledrejection` listeners can never see on their own,
+   * since this exception is caught right here and never becomes
+   * "uncaught."
+   *
+   * `options.errorReporter` lets tests inject a fake reporter directly
+   * (so a test never triggers a real network call); production leaves it
+   * unset and falls back to the real one already loaded into this page —
+   * errorReporter.js loads before this file in manifest.json's
+   * content_scripts list, so `root.YHP.ErrorReporter` is reliably there
+   * by the time parseHeatmap ever runs.
+   */
+  function reportParseError(err, opts) {
+    try {
+      var reporter = opts.errorReporter || (root && root.YHP && root.YHP.ErrorReporter);
+      if (reporter && typeof reporter.report === "function") {
+        reporter.report(err, { context: "heatmapStrategy", extra: { phase: "parseHeatmap" } });
+      }
+    } catch (_reportErr) {
+      // Reporting the failure must never itself become a new failure.
+    }
+  }
+
+  /**
+   * @param {{duration: number, doc?: Document, errorReporter?: {report: Function}}} options -
+   *   `doc` is injectable for testing; defaults to the real `document` in
+   *   a browser. `errorReporter` is injectable for testing; defaults to
+   *   `root.YHP.ErrorReporter` in production — see reportParseError.
    * @returns {Array<{startTime:number, endTime:number, score:number}>}
    */
   function parseHeatmap(options) {
@@ -194,8 +229,10 @@
     var duration = opts.duration || 0;
     try {
       return extractHeatmapFromDom(doc, duration);
-    } catch (_err) {
-      // Treat YouTube's player markup as unstable: fail closed, not loud.
+    } catch (err) {
+      // Treat YouTube's player markup as unstable: fail closed, not loud —
+      // but still worth knowing about, see reportParseError.
+      reportParseError(err, opts);
       return [];
     }
   }

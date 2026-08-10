@@ -404,14 +404,15 @@ The interval-math core, the object-graph search, both detection strategies'
 parsing logic, the `ytInitialData` HTML-extraction helper (see the fifth
 "Known limitations" finding below), the error reporter's DSN-parsing/
 scrubbing/id-generation helpers, the analytics module's id-generation and
-init-gating logic, and the player controller's skip/anti-loop behavior are
-covered with `node:test` (no browser needed):
+init-gating logic, both detection strategies' own error-reporting
+behavior (see "Error reporting" below), and the player controller's
+skip/anti-loop behavior are covered with `node:test` (no browser needed):
 
 ```bash
 npm test
 ```
 
-128 tests, all passing as of this build.
+134 tests, all passing as of this build.
 
 ## Icons
 
@@ -560,6 +561,48 @@ existing `throw`/error-message call sites, and covered going forward by
 (`MAX_REPORTS_PER_SESSION`, 10) and deduplicated per session (by error
 type + message + first stack frame) so one repeating bug can't blow
 through Sentry's free-tier quota.
+
+### The one gap this didn't originally cover: YouTube changing its own DOM/data shape
+
+`installGlobalHandlers` only ever sees *uncaught* exceptions — but
+`heatmapStrategy.js`'s `parseHeatmap()` and `chapterStrategy.js`'s
+`parseChapters()` both wrap their DOM/data reading in their own
+try/catch and return `[]` on any failure ("treat YouTube's markup as
+unstable: fail closed, not loud" — see those files). That means a real
+exception inside either one was being caught *internally* and never
+reached the global handlers at all — a "YouTube changed something and we
+have zero visibility into it" blind spot, confirmed by reading the code
+rather than assumed.
+
+Worth being precise about what this does and doesn't cover, though — there
+are two different ways "YouTube changed their DOM" can show up:
+
+1. **A selector silently stops matching anything** (e.g.
+   `.ytp-heat-map-container` gets renamed) — `querySelector` just returns
+   `null`, the code takes its normal early-return path, and **no
+   exception is ever thrown**. This is indistinguishable from "this video
+   simply has no heatmap," which is true for the *majority* of ordinary
+   videos — there's no way to tell those apart from a single video's
+   result alone. The only real signal for this case is the aggregate:
+   watching the `detection_result` analytics event's `has_heatmap` rate
+   across many videos/users over time (see "Analytics" below) — a sharp
+   population-wide drop is the tell, not any one empty result.
+2. **The parsing code itself throws** — a genuinely new shape breaking an
+   assumption we didn't defend against. This one *is* fixable: both
+   `parseHeatmap(options)` and `parseChapters(pageData, videoDuration,
+   opts)` now accept an injectable `errorReporter` (falling back to
+   `root.YHP.ErrorReporter` — already loaded by the time either of these
+   ever runs, per manifest.json's script order) and report to it from
+   their catch blocks specifically, while leaving the ordinary
+   "nothing found" early-return paths completely untouched — so an
+   ordinary video without a heatmap or chapters still generates zero
+   noise. Covered by tests forcing a real exception through each
+   (a throwing `querySelector`, and a throwing property getter on a
+   chapter's title reached only during the fallback-checking logic in
+   `extractTitle`, not during `deepFind`'s own — already very
+   defensive — traversal) and confirming both that the report fires with
+   the right context and that the ordinary-absence case still reports
+   nothing.
 
 ## Analytics
 

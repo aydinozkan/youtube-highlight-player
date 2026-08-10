@@ -16,7 +16,7 @@
 (function (root, factory) {
   var deepFindModule = (root && root.YHP && root.YHP.DeepFind)
     || (typeof require === "function" ? require("../utils/deepFind") : null);
-  var api = factory(deepFindModule);
+  var api = factory(deepFindModule, root);
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
@@ -24,7 +24,7 @@
     root.YHP = root.YHP || {};
     root.YHP.ChapterStrategy = api;
   }
-})(typeof window !== "undefined" ? window : globalThis, function (DeepFind) {
+})(typeof window !== "undefined" ? window : globalThis, function (DeepFind, root) {
   "use strict";
 
   var deepFind = DeepFind ? DeepFind.deepFind : function () { return []; };
@@ -65,11 +65,33 @@
   }
 
   /**
+   * See heatmapStrategy.js's identical helper for the full reasoning —
+   * this is specifically for a genuine, unexpected exception during
+   * parsing, not the ordinary "no chapter data present" case (extractRaw
+   * ChapterNodes already returns [] for that with nothing thrown, so
+   * parseChapters below just produces [] naturally, no exception, nothing
+   * to report). `opts.errorReporter` lets tests inject a fake reporter;
+   * production falls back to `root.YHP.ErrorReporter`.
+   */
+  function reportParseError(err, opts) {
+    try {
+      var reporter = opts.errorReporter || (root && root.YHP && root.YHP.ErrorReporter);
+      if (reporter && typeof reporter.report === "function") {
+        reporter.report(err, { context: "chapterStrategy", extra: { phase: "parseChapters" } });
+      }
+    } catch (_reportErr) {
+      // Reporting the failure must never itself become a new failure.
+    }
+  }
+
+  /**
    * @param {{ytInitialData?: object, playerResponse?: object}} pageData
    * @param {number} [videoDuration] - used to give the final chapter an end time
+   * @param {{errorReporter?: {report: Function}}} [opts] - errorReporter
+   *   is injectable for testing; see reportParseError.
    * @returns {Array<{id:string, title:string, startTime:number, endTime:number}>}
    */
-  function parseChapters(pageData, videoDuration) {
+  function parseChapters(pageData, videoDuration, opts) {
     try {
       var rawNodes = extractRawChapterNodes(pageData);
 
@@ -99,7 +121,10 @@
           endTime: Math.max(endTime, startTime),
         };
       });
-    } catch (_err) {
+    } catch (err) {
+      // Treat YouTube's page data shape as unstable: fail closed, not
+      // loud — but still worth knowing about, see reportParseError.
+      reportParseError(err, opts || {});
       return [];
     }
   }

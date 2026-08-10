@@ -11,7 +11,7 @@ bug reports and well-scoped PRs are genuinely welcome.
 git clone https://github.com/aydinozkan/youtube-highlight-player.git
 cd youtube-highlight-player
 npm install       # only dev dependency is @resvg/resvg-js, for icon builds
-npm test          # 128 tests, no browser needed
+npm test          # 134 tests, no browser needed
 ```
 
 To try it live: `chrome://extensions` → enable **Developer mode** → **Load

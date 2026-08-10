@@ -145,6 +145,43 @@ test("HeatmapStrategy.parseHeatmap returns [] when there's no heatmap container,
   assert.deepEqual(HeatmapStrategy.parseHeatmap({ doc: heatmapDoc([{ widthPx: 895, d: "" }]), duration: 100 }), []);
 });
 
+// Simulates "YouTube changed something enough to break an assumption in
+// our own parsing code" — a genuine exception, not just an absent
+// container — see heatmapStrategy.js's reportParseError comment for why
+// these two cases (ordinary absence vs. a real thrown error) are treated
+// differently.
+test("HeatmapStrategy.parseHeatmap reports a genuine parse exception and still returns []", () => {
+  let reportedError = null;
+  let reportedMeta = null;
+  const fakeReporter = { report: (err, meta) => { reportedError = err; reportedMeta = meta; } };
+  const throwingDoc = { querySelector: () => { throw new Error("simulated YouTube markup change"); } };
+
+  const samples = HeatmapStrategy.parseHeatmap({ doc: throwingDoc, duration: 100, errorReporter: fakeReporter });
+
+  assert.deepEqual(samples, []);
+  assert.ok(reportedError instanceof Error);
+  assert.equal(reportedError.message, "simulated YouTube markup change");
+  assert.equal(reportedMeta.context, "heatmapStrategy");
+});
+
+test("HeatmapStrategy.parseHeatmap does NOT report anything for the ordinary 'no heatmap for this video' case", () => {
+  let reportCalled = false;
+  const fakeReporter = { report: () => { reportCalled = true; } };
+  const emptyDoc = makeDoc(el("body", {}, {}, []));
+
+  HeatmapStrategy.parseHeatmap({ doc: emptyDoc, duration: 100, errorReporter: fakeReporter });
+
+  assert.equal(reportCalled, false, "an absent heatmap container is normal — most videos don't have one — and must not be reported");
+});
+
+test("HeatmapStrategy.parseHeatmap never throws even when no errorReporter is available at all", () => {
+  const throwingDoc = { querySelector: () => { throw new Error("simulated YouTube markup change"); } };
+  assert.doesNotThrow(() => {
+    const samples = HeatmapStrategy.parseHeatmap({ doc: throwingDoc, duration: 100 }); // no errorReporter passed, none on globalThis.YHP either
+    assert.deepEqual(samples, []);
+  });
+});
+
 test("ChapterStrategy.parseChapters normalizes chapters and infers end times from the next chapter / duration", () => {
   const pageData = {
     ytInitialData: {
@@ -174,6 +211,64 @@ test("ChapterStrategy.parseChapters normalizes chapters and infers end times fro
 
 test("ChapterStrategy.parseChapters returns [] when no chapter data is present", () => {
   assert.deepEqual(ChapterStrategy.parseChapters({ ytInitialData: {} }, 90), []);
+});
+
+// Same reasoning as heatmapStrategy's equivalent test: a genuine thrown
+// exception is a real, narrow signal ("something we didn't anticipate
+// just happened"), distinct from the ordinary "no chapters for this
+// video" case, which returns [] without ever throwing. Forcing this one
+// for real: `title.simpleText` is a throwing getter on an otherwise
+// valid-shaped chapter node, so deepFind finds and returns the node fine
+// (isChapterNode's own check only reads `!!node.title` and
+// `typeof node.title`, never touching `.simpleText`) — the throw only
+// happens later, inside extractTitle's own post-processing, which is
+// where parseChapters' outer try/catch actually lives.
+test("ChapterStrategy.parseChapters reports a genuine parse exception and still returns []", () => {
+  let reportedError = null;
+  let reportedMeta = null;
+  const fakeReporter = { report: (err, meta) => { reportedError = err; reportedMeta = meta; } };
+
+  const throwingTitle = {};
+  Object.defineProperty(throwingTitle, "simpleText", {
+    get() { throw new Error("simulated YouTube markup change"); },
+  });
+  const pageData = {
+    ytInitialData: {
+      markersMap: [{ value: { chapters: [{ timeRangeStartMillis: 5000, title: throwingTitle }] } }],
+    },
+  };
+
+  const chapters = ChapterStrategy.parseChapters(pageData, 90, { errorReporter: fakeReporter });
+
+  assert.deepEqual(chapters, []);
+  assert.ok(reportedError instanceof Error);
+  assert.equal(reportedError.message, "simulated YouTube markup change");
+  assert.equal(reportedMeta.context, "chapterStrategy");
+});
+
+test("ChapterStrategy.parseChapters does NOT report anything for the ordinary 'no chapters for this video' case", () => {
+  let reportCalled = false;
+  const fakeReporter = { report: () => { reportCalled = true; } };
+
+  ChapterStrategy.parseChapters({ ytInitialData: {} }, 90, { errorReporter: fakeReporter });
+
+  assert.equal(reportCalled, false, "no chapter data is normal — most videos don't have chapters — and must not be reported");
+});
+
+test("ChapterStrategy.parseChapters never throws even when no errorReporter is available at all", () => {
+  const throwingTitle = {};
+  Object.defineProperty(throwingTitle, "simpleText", {
+    get() { throw new Error("simulated YouTube markup change"); },
+  });
+  const pageData = {
+    ytInitialData: {
+      markersMap: [{ value: { chapters: [{ timeRangeStartMillis: 5000, title: throwingTitle }] } }],
+    },
+  };
+  assert.doesNotThrow(() => {
+    const chapters = ChapterStrategy.parseChapters(pageData, 90); // no opts at all
+    assert.deepEqual(chapters, []);
+  });
 });
 
 const CHAPTERS_ONLY_PAGE_DATA = {
